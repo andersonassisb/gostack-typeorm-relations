@@ -43,13 +43,13 @@ class CreateOrderService {
 
     if (customerIdExists) throw new AppError('This order is already exists');
 
-    const findCustomer = await customersRepository.findById(customer_id);
+    const customer = await customersRepository.findById(customer_id);
 
     const findProducts = await productsRepository.findAllById(products);
 
-    if (!findCustomer || !findProducts) throw new AppError('Not exists');
+    if (!customer || !findProducts) throw new AppError('Not exists');
 
-    const order = await ordersRepository.create({ findCustomer, findProducts });
+    const order = await ordersRepository.create({ customer, products });
 
     return order;
   }

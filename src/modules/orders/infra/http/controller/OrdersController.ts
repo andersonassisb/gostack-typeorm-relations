@@ -9,10 +9,10 @@ export default class OrdersController {
   public async show(request: Request, response: Response): Promise<Response> {
     const { id } = request.params;
     const findOrderService = container.resolve(FindOrderService);
-    const orders = await findOrderService.execute({
+    const data = await findOrderService.execute({
       id,
     });
-    return response.json(orders);
+    return response.json(data);
   }
 
   public async create(request: Request, response: Response): Promise<Response> {
