@@ -16,6 +16,12 @@ interface IProduct {
   quantity: number;
 }
 
+interface IEditProduct {
+  product_id: string;
+  price: number;
+  quantity: number;
+}
+
 interface IRequest {
   customer_id: string;
   products: IProduct[];
@@ -47,9 +53,20 @@ class CreateOrderService {
 
     const findProducts = await productsRepository.findAllById(products);
 
+    const editProducts: IEditProduct[] = findProducts.map(product => {
+      return {
+        product_id: product.id,
+        price: product.price,
+        quantity: product.quantity,
+      };
+    });
+
     if (!customer || !findProducts) throw new AppError('Not exists');
 
-    const order = await ordersRepository.create({ customer, products });
+    const order = await ordersRepository.create({
+      customer,
+      products: editProducts,
+    });
 
     return order;
   }
