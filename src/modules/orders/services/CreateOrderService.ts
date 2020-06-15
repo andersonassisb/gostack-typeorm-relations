@@ -53,6 +53,8 @@ class CreateOrderService {
 
     const findProducts = await productsRepository.findAllById(products);
 
+    if (!customer || !findProducts) throw new AppError('Not exists');
+
     const editProducts: IEditProduct[] = findProducts.map(product => {
       return {
         product_id: product.id,
@@ -60,8 +62,6 @@ class CreateOrderService {
         quantity: product.quantity,
       };
     });
-
-    if (!customer || !findProducts) throw new AppError('Not exists');
 
     const order = await ordersRepository.create({
       customer,
