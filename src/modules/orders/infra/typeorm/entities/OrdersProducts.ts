@@ -24,12 +24,6 @@ class OrdersProducts {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @Column('uuid')
-  product_id: string;
-
-  @Column('uuid')
-  order_id: string;
-
   @Column('decimal')
   price: number;
 
