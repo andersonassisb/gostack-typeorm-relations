@@ -22,6 +22,7 @@ class Order {
   customer: Customer;
 
   @OneToMany(() => OrdersProducts, ordersProducts => ordersProducts, {
+    eager: true,
     cascade: true,
   })
   @JoinTable()

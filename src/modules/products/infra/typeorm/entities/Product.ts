@@ -25,6 +25,7 @@ class Product {
   quantity: number;
 
   @OneToMany(() => OrdersProducts, ordersProducts => ordersProducts, {
+    eager: true,
     cascade: true,
   })
   @JoinTable()
