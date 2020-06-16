@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  JoinTable,
 } from 'typeorm';
 
 import OrdersProducts from '@modules/orders/infra/typeorm/entities/OrdersProducts';
@@ -18,16 +17,13 @@ class Product {
   @Column()
   name: string;
 
-  @Column('decimal')
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column('int')
+  @Column('integer')
   quantity: number;
 
-  @OneToMany(() => OrdersProducts, ordersProducts => ordersProducts, {
-    cascade: true,
-  })
-  @JoinTable()
+  @OneToMany(() => OrdersProducts, orderProducts => orderProducts.product)
   order_products: OrdersProducts[];
 
   @CreateDateColumn()

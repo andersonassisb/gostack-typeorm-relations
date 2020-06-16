@@ -2,10 +2,6 @@ import { inject, injectable } from 'tsyringe';
 
 import AppError from '@shared/errors/AppError';
 
-import OrdersRepository from '@modules/orders/infra/typeorm/repositories/OrdersRepository';
-import CustomersRepository from '@modules/customers/infra/typeorm/repositories/CustomersRepository';
-import ProductsRepository from '@modules/products/infra/typeorm/repositories/ProductsRepository';
-
 import IProductsRepository from '@modules/products/repositories/IProductsRepository';
 import ICustomersRepository from '@modules/customers/repositories/ICustomersRepository';
 import Order from '../infra/typeorm/entities/Order';
@@ -16,60 +12,64 @@ interface IProduct {
   quantity: number;
 }
 
-interface IEditProduct {
-  product_id: string;
-  price: number;
-  quantity: number;
-}
-
 interface IRequest {
   customer_id: string;
   products: IProduct[];
 }
 
 @injectable()
-class CreateOrderService {
+class CreateProductService {
   constructor(
     @inject('OrdersRepository')
     private ordersRepository: IOrdersRepository,
-
     @inject('ProductsRepository')
     private productsRepository: IProductsRepository,
-
     @inject('CustomersRepository')
     private customersRepository: ICustomersRepository,
   ) {}
 
   public async execute({ customer_id, products }: IRequest): Promise<Order> {
-    const ordersRepository = new OrdersRepository();
-    const customersRepository = new CustomersRepository();
-    const productsRepository = new ProductsRepository();
+    // busca consumer
+    const customer = await this.customersRepository.findById(customer_id);
+    if (!customer) {
+      throw new AppError('Customer not found');
+    }
+    // busca produtos
+    const findProducts = await this.productsRepository.findAllById(products);
+    if (!findProducts) {
+      throw new AppError('Products not found');
+    }
 
-    const customerIdExists = await ordersRepository.findById(customer_id);
-
-    if (customerIdExists) throw new AppError('This order is already exists');
-
-    const customer = await customersRepository.findById(customer_id);
-
-    const findProducts = await productsRepository.findAllById(products);
-
-    if (!customer || !findProducts) throw new AppError('Not exists');
-
-    const editProducts: IEditProduct[] = findProducts.map(product => {
-      return {
-        product_id: product.id,
-        price: product.price,
-        quantity: product.quantity,
-      };
+    // verifica estoque do produto
+    const findProductsInStock = products.every(product => {
+      const findedProduct = findProducts.find(
+        storedProduct => storedProduct.id === product.id,
+      );
+      return product.quantity < (findedProduct?.quantity || 0);
     });
+    if (!findProductsInStock) {
+      throw new AppError('Product not in stock');
+    }
 
-    const order = await ordersRepository.create({
+    // salva novas ordens
+    const order = await this.ordersRepository.create({
       customer,
-      products: editProducts,
+      products: products.map(product => {
+        const findProduct = findProducts.find(
+          storedProduct => storedProduct.id === product.id,
+        );
+        return {
+          product_id: product.id,
+          quantity: product.quantity,
+          price: findProduct?.price || 0,
+        };
+      }),
     });
+
+    await this.productsRepository.updateQuantity(products);
 
     return order;
   }
 }
 
-export default CreateOrderService;
+export default CreateProductService;
